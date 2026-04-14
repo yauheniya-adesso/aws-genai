@@ -181,6 +181,10 @@ Building agentic AI applications follows a predictable pattern: you start with a
 
 A serverless execution environment designed specifically for agentic workloads. Unlike standard serverless functions, Runtime supports **sessions up to 8 hours** with **100 MB payload capacity** for multi-modal content.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/yauheniya-adesso/aws-genai/main/images/AgentCore_Runtime.png" alt="AgentCore Runtime" width="100%">
+</p>
+
 #### <img src="https://api.iconify.design/mdi/chip.svg?color=%23FF5500" width="14"/> MicroVM Isolation
 
 | Feature | Detail |
