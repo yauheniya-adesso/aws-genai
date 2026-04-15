@@ -234,9 +234,7 @@ The guardrail's content policy blocked the response.
 ### 5. Converse API with Guardrails — `converse`
 Used the higher-level `converse` API with `guardrailConfig` to apply the guardrail during a standard chat turn.
 
----
-
-## <img src="https://api.iconify.design/mdi/alert-circle-outline.svg?color=%23FF5500" width="16"/> EU / US Region Challenges
+### <img src="https://api.iconify.design/mdi/alert-circle-outline.svg?color=%23FF5500" width="16"/> EU / US Region Challenges
 
 This exercise ran into several cross-region issues because resources were created in different AWS regions.
 
@@ -265,9 +263,8 @@ Amazon Nova models do not support on-demand invocation — they require an infer
 
 **Fix:** Use the AWS system-defined cross-region inference profile `eu.amazon.nova-micro-v1:0`, which routes across EU regions and satisfies the inference profile requirement.
 
----
 
-## <img src="https://api.iconify.design/mdi/code-braces.svg?color=%23FF5500" width="16"/> Final Client Setup
+### <img src="https://api.iconify.design/mdi/code-braces.svg?color=%23FF5500" width="16"/> Final Client Setup
 
 ```python
 # Guardrail lives in eu-west-1; inference profile was in us-east-1
