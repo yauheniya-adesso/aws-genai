@@ -55,11 +55,10 @@ job_status = bedrock_runtime.get_async_invoke(invocationArn=invocation_arn)
 print(job_status["status"])  # InProgress / Completed / Failed
 ```
 
----
 
-## <img src="https://api.iconify.design/mdi/check-circle-outline.svg?color=%23FF5500" width="16"/> Develop a Task Tracker with Amazon Q 
+## <img src="https://api.iconify.design/mdi/check-circle-outline.svg?color=%23FF5500" width="16"/> Develop a Task Tracker with Amazon Q in a Few Prompts
 
-Built a task management app in two stages: a CLI and a Flask web API, both AI-assisted.
+Build a task management app in two stages: a CLI and a Flask web API, both AI-assisted.
 
 ### <img src="https://api.iconify.design/mdi/console-line.svg?color=%23FF5500" width="14"/> Part 1 — CLI (`task_tracker.py`)
 
@@ -91,13 +90,130 @@ Converted the CLI into a web app with a JSON REST API and HTML frontend, persist
 
 **Stack:** Flask · JSON file persistence · `pathlib.Path`
 
-## AWS Bedrock Guardrails
+## <img src="https://api.iconify.design/mdi/database-search-outline.svg?color=%23FF5500" width="18"/> Amazon Bedrock Knowledge Bases
 
-<img src="https://api.iconify.design/mdi/shield-lock-outline.svg?color=%23FF5500" width="18"/> **Goal:** Explore Amazon Bedrock Guardrails — apply safety policies to model inputs and outputs using `apply_guardrail`, `invoke_model`, and `converse`.
+Knowledge Bases uses **Retrieval-Augmented Generation (RAG)** to ground model responses in your own documents.
+
+### How It Works
+
+| Step | What Happens | AWS Service |
+|---|---|---|
+| **1. Ingest** | Documents are uploaded and chunked into text segments | Amazon S3 |
+| **2. Embed** | Each chunk is converted to a vector (numerical representation) | Amazon Titan Text Embeddings v2 |
+| **3. Store** | Vectors are indexed for fast semantic lookup | Amazon OpenSearch Serverless |
+| **4. Query** | User question → embed → find similar vectors → generate answer with citations | Bedrock Foundation Model |
+
+### Setting Up a Knowledge Base
+
+**1. Create** — Provide a name; Bedrock auto-creates the required IAM roles linking S3 and OpenSearch.
+
+**2. Connect a data source** — Point to an S3 bucket (or Confluence, SharePoint, Salesforce, or a custom source).
+
+**3. Choose a parsing strategy** — The default parser covers text and PDF. Use *Bedrock Data Automation* for multimodal content (charts, images).
+
+**4. Choose a chunking strategy** — Default splits into ~300-token chunks respecting sentence boundaries. Alternatives: fixed size, hierarchical, semantic, or none.
+
+**5. Select models & storage** — Pick an embedding model (e.g. `amazon.titan-embed-text-v2:0`) and a vector store (e.g. Amazon OpenSearch Serverless). Bedrock can provision both automatically.
+
+## <img src="https://api.iconify.design/mdi/text-box-edit-outline.svg?color=%23FF5500" width="18"/> Prompt Management
+
+Prompt Management lets you store, version, and reuse prompts as templates — keeping them out of application code and consistent across environments.
+
+### Prompt Variants
+
+Each saved prompt can have multiple **variants** for A/B testing or environment-specific configs:
+
+| Field | Description |
+|---|---|
+| `variantName` | Identifier for this variant |
+| `modelId` | Target foundation model |
+| `inferenceConfig` | `temperature`, `topP`, `stopSequences` |
+| `templateConfig` | Prompt text with `{{variable}}` placeholders |
+
+Variables are substituted at runtime, so one template serves many use cases without code changes.
 
 ---
 
-## <img src="https://api.iconify.design/mdi/book-open-outline.svg?color=%23FF5500" width="16"/> What This Exercise Covers
+## <img src="https://api.iconify.design/mdi/message-text-outline.svg?color=%23FF5500" width="18"/> Converse API
+
+A unified, **stateful** API for conversational applications. Unlike `invoke_model`, it accepts a full message history and works the same way across all supported foundation models.
+
+### Building Blocks
+
+| Component | Purpose |
+|---|---|
+| `system` | Sets the model's role and constraints |
+| `messages` | Array of `{role, content}` turns — the conversation history |
+| `inferenceConfig` | `temperature`, `maxTokens`, `topP` |
+| `toolConfig` | Declares tools the model can call (Lambda, APIs, etc.) |
+
+### Tool Execution Flow
+
+1. Send user message + tool definitions to `converse`
+2. Model returns a `toolUse` block with the chosen tool and parameters
+3. Your code executes the tool and returns a `toolResult`
+4. Call `converse` again with the updated history — model generates the final answer
+
+### Production Notes
+
+- Store conversation history in **DynamoDB** or Redis, not in memory
+- Prune or summarize history before hitting the model's context window limit
+- Not all models support system prompts or every inference parameter — check model docs
+
+---
+
+## <img src="https://api.iconify.design/mdi/sitemap-outline.svg?color=%23FF5500" width="18"/> Amazon Bedrock Flows
+
+A **visual, drag-and-drop** workflow builder for orchestrating multi-step generative AI pipelines without extensive code.
+
+### Node Types
+
+| Category | Node | What It Does |
+|---|---|---|
+| I/O | Input / Output | Entry and exit points of the flow |
+| Logic | Condition | Branches flow based on evaluated conditions |
+| Logic | Iterator / Collector | Loops over arrays; re-assembles results |
+| AI | Prompt Node | Calls a foundation model (inline or from Prompt Management) |
+| Integration | S3, Lambda, Lex, Agents | Connects to AWS services for data and custom logic |
+
+Flows are ideal for pipelines that combine retrieval, generation, and conditional branching — without writing orchestration glue code.
+
+---
+
+## <img src="https://api.iconify.design/mdi/robot-excited-outline.svg?color=%23FF5500" width="18"/> Amazon Bedrock Agents
+
+Agents autonomously break down a goal into steps, call tools, and loop until the task is complete — no hard-coded workflow required.
+
+### Key Components
+
+| Component | Role |
+|---|---|
+| **Foundation Model** | Reasons over inputs and decides which tool to call next |
+| **Instructions** | Natural-language operating rules (scope, tone, constraints) |
+| **Action Groups** | Lambda functions or APIs the agent can invoke |
+| **Knowledge Bases** | RAG sources for domain-specific context |
+| **Memory** | Persists summaries across sessions (configurable by days / session count) |
+
+### Multi-Agent Collaboration
+
+Specialized agents (e.g. flight booking, calendar) can be composed under an **orchestrator agent** that routes subtasks and merges results.
+
+### Strands Agents SDK
+
+An open-source, lightweight alternative to native Bedrock agent creation:
+
+```python
+from strands import Agent
+
+agent = Agent()
+agent("Tell me about agentic AI")
+```
+
+Supports any LLM provider, streaming, multi-agent patterns, and built-in observability.
+
+## <img src="https://api.iconify.design/mdi/shield-lock-outline.svg?color=%23FF5500" width="18"/> AWS Bedrock Guardrails
+
+**Goal:** Explore Amazon Bedrock Guardrails — apply safety policies to model inputs and outputs using `apply_guardrail`, `invoke_model`, and `converse`.
 
 ### 1. PII Detection — `apply_guardrail`
 Tested a text snippet containing a license plate number (`UNV 425`).
@@ -175,15 +291,9 @@ Building agentic AI applications follows a predictable pattern: you start with a
 
 **Amazon Bedrock AgentCore** eliminates this undifferentiated heavy lifting with purpose-built, modular services for agent operations.
 
----
-
 ### <img src="https://api.iconify.design/mdi/server-outline.svg?color=%23FF5500" width="16"/> AgentCore Runtime — Purpose-Built Agent Hosting
 
 A serverless execution environment designed specifically for agentic workloads. Unlike standard serverless functions, Runtime supports **sessions up to 8 hours** with **100 MB payload capacity** for multi-modal content.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/yauheniya-adesso/aws-genai/main/images/AgentCore_Runtime.png" alt="AgentCore Runtime" width="100%">
-</p>
 
 #### <img src="https://api.iconify.design/mdi/chip.svg?color=%23FF5500" width="14"/> MicroVM Isolation
 
@@ -202,13 +312,11 @@ A serverless execution environment designed specifically for agentic workloads. 
 | Models | Any LLM provider — Amazon Bedrock, Anthropic, OpenAI, Google |
 | Protocol | MCP (Model Context Protocol) for agent-to-tool communication |
 
----
 
 ### <img src="https://api.iconify.design/mdi/brain.svg?color=%23FF5500" width="16"/> AgentCore Memory — Context-Aware Intelligence
 
 Dual memory architecture covering both short-term (within a session) and long-term (across sessions) context, giving agents the ability to remember and reason over past interactions.
 
----
 
 ### <img src="https://api.iconify.design/mdi/api.svg?color=%23FF5500" width="16"/> AgentCore Gateway — Unified Tool Integration
 
@@ -220,7 +328,6 @@ Gateway implements **Model Context Protocol (MCP)** as a standardized way for ag
 | `tools/call` | Invoke a specific tool |
 | `x_amz_bedrock_agentcore_search` | Semantic tool discovery |
 
----
 
 ### <img src="https://api.iconify.design/mdi/key-outline.svg?color=%23FF5500" width="16"/> AgentCore Identity — Secure Agent Authentication
 
@@ -247,8 +354,6 @@ def call_third_party_service():
 - Automatic credential rotation
 - Request verification from trusted origins
 
----
-
 ### <img src="https://api.iconify.design/mdi/wrench-outline.svg?color=%23FF5500" width="16"/> AgentCore Built-in Tools — Secure Execution Environments
 
 > **Operational Pattern:** Create resource → Launch session → Interact via API → Terminate session
@@ -269,7 +374,6 @@ def call_third_party_service():
 | Capabilities | Live web page interaction, research, web app testing |
 | Security | Isolated execution with network controls |
 
----
 
 ### <img src="https://api.iconify.design/mdi/chart-line.svg?color=%23FF5500" width="16"/> AgentCore Observability — Production Monitoring
 
@@ -285,10 +389,3 @@ def call_third_party_service():
 - Automatic CloudWatch integration
 - OpenTelemetry compatibility for existing stacks
 - Key metrics: latency · token usage · session count · error rates
-
-## References
-- AWS Generative AI and AI Agents with Amazon Bedrock, Amazon Web Services @ [Coursera](https://www.coursera.org/specializations/aws-generative-ai-developers)
-    - Getting Started with AWS Generative AI for Developers
-    - Generative AI Applications with Amazon Bedrock
-    - Amazon Bedrock Customization, Optimization & Automation
-- Building AI Agents with Amazon Bedrock AgentCore, Amazon Web Services @ [Coursera](https://www.coursera.org/learn/building-ai-agents-with-amazon-bedrock-agentcore/home/module/1)
