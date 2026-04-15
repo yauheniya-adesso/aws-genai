@@ -285,3 +285,10 @@ def call_third_party_service():
 - Automatic CloudWatch integration
 - OpenTelemetry compatibility for existing stacks
 - Key metrics: latency · token usage · session count · error rates
+
+## References
+- AWS Generative AI and AI Agents with Amazon Bedrock, Amazon Web Services @ [Coursera](https://www.coursera.org/specializations/aws-generative-ai-developers)
+    - Getting Started with AWS Generative AI for Developers
+    - Generative AI Applications with Amazon Bedrock
+    - Amazon Bedrock Customization, Optimization & Automation
+- Building AI Agents with Amazon Bedrock AgentCore, Amazon Web Services @ [Coursera](https://www.coursera.org/learn/building-ai-agents-with-amazon-bedrock-agentcore/home/module/1)
